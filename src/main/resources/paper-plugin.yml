@@ -1,0 +1,20 @@
+name: icesumo
+version: '1.0-SNAPSHOT'
+main: top.andyshen2006.icesumo.Icesumo
+api-version: '1.21'
+commands:
+  start:
+    description: "开始比赛"
+    usage: "/start"
+  terminate:
+    description: "终止比赛"
+    usage: "/terminate"
+  checkin:
+    description: "检录"
+    usage: "/checkin"
+  checkinlist:
+    description: "输出检录列表"
+    usage: "/checkinlist"
+  uncheckin:
+    description: "取消检录"
+    usage: "/uncheckin"
