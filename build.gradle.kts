@@ -29,6 +29,12 @@ kotlin {
     jvmToolchain(targetJavaVersion)
 }
 
+tasks.shadowJar {
+    dependencies {
+        include(dependency("org.jetbrains.kotlin:.*"))
+    }
+}
+
 tasks.build {
     dependsOn("shadowJar")
 }
