@@ -19,3 +19,5 @@ commands:
   uncheckin:
     description: "取消检录"
     usage: "/uncheckin"
+  editheight:
+    description: "修改判定高度"
