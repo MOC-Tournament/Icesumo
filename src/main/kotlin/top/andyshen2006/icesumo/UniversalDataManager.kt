@@ -10,7 +10,7 @@ object UniversalDataManager{
     private var checkinList=mutableListOf<Player>()
     private var failList=mutableListOf<Player>()    // TODO:一个很糟的想法，这玩意可能会导致重复判定
     private var StadiumPos= arrayOfNulls<Triple<Double, Double, Double>>(4)
-    private var gravePos = Triple<Double, Double, Double>(0.0, 0.0, 0.0)
+    private var gravePos = Triple(0.0, 0.0, 0.0)
 
     // Editors
     fun editHeight(newHeight: Int) {
@@ -31,7 +31,7 @@ object UniversalDataManager{
         }
     }
 
-    fun editGravePos(playerNum: Int, newGravePos: Triple<Double, Double, Double>) {
+    fun editGravePos(newGravePos: Triple<Double, Double, Double>) {
         lock.lock()
         try {
             gravePos = newGravePos
@@ -124,11 +124,14 @@ object UniversalDataManager{
         return height
     }
 
-    fun getStadiumPos(stadiumPos:Int): Triple<Double, Double, Double>? {
-        return StadiumPos[stadiumPos]
+    fun getStadiumPos(stadiumPos:Int): Triple<Double, Double, Double> {
+        if (StadiumPos[stadiumPos] == null) {
+            return Triple(0.0, 0.0, 0.0)
+        }
+        return StadiumPos[stadiumPos]!!
     }
 
-    fun getGravePos(stadiumPos:Int): Triple<Double, Double, Double>? {
+    fun getGravePos(): Triple<Double, Double, Double> {
         return gravePos
     }
 
@@ -146,5 +149,9 @@ object UniversalDataManager{
 
     fun isFail(player: Player): Boolean{
         return failList.contains(player)
+    }
+
+    fun isEnd(): Boolean{   //只剩下一个人
+        return failList.size+1==checkinList.size
     }
 }

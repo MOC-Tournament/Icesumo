@@ -12,3 +12,15 @@ terminate:手动紧急终止比赛（可以标注原因）
 editheight:修改判定高度
 editpos:修改玩家传送位置
 editgrave:修改死亡后位置
+
+### 余下任务：
+
+比赛前禁止move
+
+配置文件
+
+装备自动分发
+
+ActionBar：实时查看剩余时间
+
+全负判定

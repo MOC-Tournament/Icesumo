@@ -21,3 +21,9 @@ commands:
     usage: "/uncheckin"
   editheight:
     description: "修改判定高度"
+  testdelay:
+    description: ""
+  testedit:
+    description: ""
+  testlisten:
+    description: ""

@@ -33,7 +33,7 @@ kotlin {
 
 tasks.shadowJar {
     dependencies {
-        include(dependency("org.jetbrains.kotlin:.*"))
+        configurations = listOf(project.configurations.runtimeClasspath.get())
     }
 }
 
