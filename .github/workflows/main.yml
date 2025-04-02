@@ -15,3 +15,10 @@ jobs:
       run: chmod +x gradlew
     - name: Run build with Gradle Wrapper
       run: ./gradlew build
+    - name: List build files
+      run: ls -la build/libs/
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: plugin-jars
+        path: build/libs/*.jar
