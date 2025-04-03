@@ -10,6 +10,8 @@ commands:
   terminate:
     description: "终止比赛"
     usage: "/terminate"
+  showinfo:
+    description: ""
   checkin:
     description: "检录"
     usage: "/checkin"
@@ -21,9 +23,15 @@ commands:
     usage: "/uncheckin"
   editheight:
     description: "修改判定高度"
+  editpos:
+    description: "修改场馆位置"
+  editgrave:
+    description: "修改判定高度"
   testdelay:
     description: ""
   testedit:
     description: ""
   testlisten:
+    description: ""
+  testkit:
     description: ""

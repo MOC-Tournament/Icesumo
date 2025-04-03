@@ -7,10 +7,11 @@ object UniversalDataManager{
     private var height=60
     private val lock= ReentrantLock()
     private var isStart = false
+    private var preparing = false
     private var checkinList=mutableListOf<Player>()
     private var failList=mutableListOf<Player>()    // TODO:一个很糟的想法，这玩意可能会导致重复判定
-    private var StadiumPos= arrayOfNulls<Triple<Double, Double, Double>>(4)
-    private var gravePos = Triple(0.0, 0.0, 0.0)
+    private var StadiumPos= arrayOf( Triple(-1.0,60.0,-1.0), Triple(1.0,60.0,1.0), Triple(-1.0,60.0,1.0), Triple(1.0,60.0,-1.0) )
+    private var gravePos = Triple(0.0, 70.0, 0.0)
 
     // Editors
     fun editHeight(newHeight: Int) {
@@ -25,7 +26,7 @@ object UniversalDataManager{
     fun editStadiumPos(playerNum: Int, newStadiumPos: Triple<Double,Double, Double>) {
         lock.lock()
         try {
-            StadiumPos[playerNum] = newStadiumPos
+            StadiumPos[playerNum-1] = newStadiumPos
         }finally {
             lock.unlock()
         }
@@ -40,11 +41,21 @@ object UniversalDataManager{
         }
     }
 
+    fun editPreparingStatus(newStatus:Boolean) {
+        lock.lock()
+        try {
+            preparing = newStatus
+        }finally {
+            lock.unlock()
+        }
+    }
+
     // Control Flow
     fun start() : Boolean{
         lock.lock()
         try {
             if (!isStart) {
+                failList.clear()
                 isStart = true
             }else{
                 return false
@@ -60,6 +71,8 @@ object UniversalDataManager{
         lock.lock()
         try {
             if (isStart) {
+                failList.clear()
+                checkinList.clear()
                 isStart = false
             }else {
                 return false
@@ -73,7 +86,13 @@ object UniversalDataManager{
     fun addCheckinPlayer(player: Player): Boolean {
         lock.lock()
         try {
-            if (checkinList.contains(player)) {
+            var flag=true
+            checkinList.forEach { checkedPlayer ->
+                when{
+                    checkedPlayer.uniqueId==player.uniqueId -> flag=false
+                }
+            }
+            if (!flag) {
                 return false
             }else{
                 checkinList.add(player)
@@ -89,12 +108,11 @@ object UniversalDataManager{
         lock.lock()
         lock.lock()
         try {
-            if (checkinList.contains(player)) {
-                checkinList.remove(player)
-            }else{
-                return false
+            checkinList.forEach { checkedPlayer->
+                if (checkedPlayer.uniqueId==player.uniqueId) {
+                    checkinList.remove(checkedPlayer)
+                }
             }
-
         }finally {
             lock.unlock()
         }
@@ -104,7 +122,7 @@ object UniversalDataManager{
     fun playerFail(player: Player): Boolean {
         lock.lock()
         try {
-            if (failList.contains(player)) {
+            if (failList.contains(player)) {    //TODO:可能需要修改
                 throw UnsupportedOperationException("不可能出现两次失败")
             }else{
                 failList.add(player)
@@ -125,10 +143,7 @@ object UniversalDataManager{
     }
 
     fun getStadiumPos(stadiumPos:Int): Triple<Double, Double, Double> {
-        if (StadiumPos[stadiumPos] == null) {
-            return Triple(0.0, 0.0, 0.0)
-        }
-        return StadiumPos[stadiumPos]!!
+        return StadiumPos[stadiumPos]
     }
 
     fun getGravePos(): Triple<Double, Double, Double> {
@@ -144,14 +159,56 @@ object UniversalDataManager{
     }
 
     fun isCheckin(player: Player): Boolean {
-        return checkinList.contains(player)
+        checkinList.forEach { checkedPlayer ->
+            if(checkedPlayer.uniqueId==player.uniqueId){
+                return true
+            }
+        }
+       return false
     }
 
     fun isFail(player: Player): Boolean{
-        return failList.contains(player)
+        failList.forEach { failedPlayer ->
+            if(failedPlayer.uniqueId==player.uniqueId){
+                return true
+            }
+        }
+        return false
     }
 
-    fun isEnd(): Boolean{   //只剩下一个人
-        return failList.size+1==checkinList.size
+    fun isEnd(): Int{   //只剩下一个人
+        return when{
+            failList.size+1==checkinList.size -> 1   //决出胜负
+            failList.size==checkinList.size -> -1    //全负
+            else-> 0 //继续比赛
+        }
+    }
+
+    fun isPreparing(): Boolean{
+        return preparing
+    }
+    // Showcase Information
+    fun showInfo():String {
+        var info=""
+        info+="设定高度:$height\n"
+        info+="是否开始：$isStart\n"
+        info+="是否处于准备状态：$preparing\n"
+        info+="检录玩家名单："
+        checkinList.forEach { player ->
+            info+=player.name+","
+        }
+        info+="\n"
+        info+="当前已失败玩家名单："
+        failList.forEach { player ->
+            info+=player.name+","
+        }
+        info+="\n"
+        info+="场馆设置："
+        StadiumPos.forEach { stadium->
+            info+="(${stadium.first},${stadium.second},${stadium.third}),"
+        }
+        info+="\n"
+        info+="死亡场地设置$gravePos\n"
+        return info
     }
 }

@@ -70,3 +70,10 @@ class EditFlagCommandExecutor : CommandExecutor {
     }
 }
 
+class KitCommandExecutor : CommandExecutor {    //测试工具：强制使用dispatchCommand
+    override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>?): Boolean {
+        val player = sender
+        Bukkit.dispatchCommand(player,"kit testkit")
+        return true
+    }
+}

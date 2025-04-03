@@ -7,12 +7,15 @@ import org.bukkit.plugin.java.JavaPlugin
 class Icesumo : JavaPlugin() , Listener{
     override fun onEnable() {
         server.pluginManager.registerEvents(FailStatusChecker(), this)
+        server.pluginManager.registerEvents(StartCommandExecutor(),this)
+        server.pluginManager.registerEvents(CheckedPlayerLeaveListener(),this)
         saveResource("config.yml",false)
         saveDefaultConfig() //TODO:允许手动配置参数
-        logger.info("Enabling Ice sumo Plugin!")
+        logger.info("Enabling Ice Sumo Plugin!")
+        logger.info("Ice Sumo plugin successfully enabled!")
         // Plugin startup logic
         getCommand("start")?.setExecutor(StartCommandExecutor())
-        getCommand("info")?.setExecutor(InfoCommandExecutor())
+        getCommand("showinfo")?.setExecutor(InfoCommandExecutor())
         getCommand("terminate")?.setExecutor(TerminateCommandExecutor())
         // Checkins
         getCommand("checkin")?.setExecutor(CheckinCommandExecutor())
@@ -26,6 +29,7 @@ class Icesumo : JavaPlugin() , Listener{
         getCommand("testdelay")?.setExecutor( TestDelayCommandExecutor())
         getCommand("testlisten")?.setExecutor(StartListenCommandExecutor())
         getCommand("testedit")?.setExecutor(EditFlagCommandExecutor())
+        getCommand("testkit")?.setExecutor(KitCommandExecutor())
 
     }
 
