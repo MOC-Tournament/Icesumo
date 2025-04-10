@@ -4,47 +4,44 @@ import org.bukkit.entity.Player
 import java.util.concurrent.locks.ReentrantLock
 
 object UniversalDataManager{
-    private var height=60
-    private val lock= ReentrantLock()
-    private var isStart = false
-    private var preparing = false
-    private var checkinList=mutableListOf<Player>()
+    var height=60
+        set(newHeight) {
+            lock.lock()
+            try {
+                height=newHeight
+            }finally {
+                lock.unlock()
+            }
+        }
+    var isStart = false
+    var checkinList=mutableListOf<Player>()
+    var gravePos = Triple(0.0, 70.0, 0.0)
+        set(newGravePos) {
+            lock.lock()
+            try {
+                gravePos = newGravePos
+            }finally {
+                lock.unlock()
+            }
+        }
+    var preparing = false
+        set(newStatus) {
+            lock.lock()
+            try {
+                preparing = newStatus
+            }finally {
+                lock.unlock()
+            }
+        }
     private var failList=mutableListOf<Player>()    // TODO:一个很糟的想法，这玩意可能会导致重复判定
     private var StadiumPos= arrayOf( Triple(-1.0,60.0,-1.0), Triple(1.0,60.0,1.0), Triple(-1.0,60.0,1.0), Triple(1.0,60.0,-1.0) )
-    private var gravePos = Triple(0.0, 70.0, 0.0)
+    private val lock= ReentrantLock()
 
-    // Editors
-    fun editHeight(newHeight: Int) {
-        lock.lock()
-        try {
-            height=newHeight
-        }finally {
-            lock.unlock()
-        }
-    }
-
-    fun editStadiumPos(playerNum: Int, newStadiumPos: Triple<Double,Double, Double>) {
+    // Setters
+    fun setStadiumPos(playerNum: Int, newStadiumPos: Triple<Double,Double, Double>) {
         lock.lock()
         try {
             StadiumPos[playerNum-1] = newStadiumPos
-        }finally {
-            lock.unlock()
-        }
-    }
-
-    fun editGravePos(newGravePos: Triple<Double, Double, Double>) {
-        lock.lock()
-        try {
-            gravePos = newGravePos
-        }finally {
-            lock.unlock()
-        }
-    }
-
-    fun editPreparingStatus(newStatus:Boolean) {
-        lock.lock()
-        try {
-            preparing = newStatus
         }finally {
             lock.unlock()
         }
@@ -134,28 +131,12 @@ object UniversalDataManager{
     }
 
     // Getters
-    fun getCheckinList(): MutableList<Player> {
-        return checkinList
-    }
-
-    fun getHeight(): Int {
-        return height
-    }
-
     fun getStadiumPos(stadiumPos:Int): Triple<Double, Double, Double> {
         return StadiumPos[stadiumPos]
     }
 
-    fun getGravePos(): Triple<Double, Double, Double> {
-        return gravePos
-    }
-
     fun isListValid() : Boolean {
         return (checkinList.size >=2) and (checkinList.size<=4)
-    }
-
-    fun isStart() : Boolean {
-        return isStart
     }
 
     fun isCheckin(player: Player): Boolean {

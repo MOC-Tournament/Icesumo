@@ -28,7 +28,7 @@ class CheckinCommandExecutor : CommandExecutor {
 class CheckinlistCommandExecutor : CommandExecutor {
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>?): Boolean {
         sender.sendMessage("当前已检录玩家为：")
-        val checkinList=UniversalDataManager.getCheckinList()
+        val checkinList=UniversalDataManager.checkinList
         for(checkinPlayers in checkinList) {
             val playerName=checkinPlayers.name
             sender.sendMessage(playerName)

@@ -32,8 +32,8 @@ class StartCommandExecutor : CommandExecutor, Listener {
         if (UniversalDataManager.start()) {
             sender.sendMessage("正在启动比赛……")
             if (UniversalDataManager.isListValid()) {
-                for (i in 0..(UniversalDataManager.getCheckinList().size - 1)) {  //自动传送
-                    val player = UniversalDataManager.getCheckinList()[i]
+                for (i in 0..(UniversalDataManager.checkinList.size - 1)) {  //自动传送
+                    val player = UniversalDataManager.checkinList[i]
                     val stadiumPos = UniversalDataManager.getStadiumPos(i)
                     val location = Location(
                         player.world,
@@ -44,6 +44,7 @@ class StartCommandExecutor : CommandExecutor, Listener {
                         player.pitch
                     )
                     player.teleport(location)
+                    Bukkit.dispatchCommand(player,"kit icesumo")
                 }
             } else {
                 sender.sendMessage("人数不符合要求，无法启动比赛")
@@ -51,11 +52,11 @@ class StartCommandExecutor : CommandExecutor, Listener {
             }
             Bukkit.getScheduler().runTask(plugin, Runnable {
                 CoroutineScope(Dispatchers.Default).launch {    //协程，启动！
-                    val countdownJob = UniversalDataManager.getCheckinList().map { player ->            //赛前倒计时
+                    val countdownJob = UniversalDataManager.checkinList.map { player ->            //赛前倒计时
                         async { countdownBeforeGame(player) }
                     }
                     countdownJob.awaitAll()
-                    UniversalDataManager.editPreparingStatus(false)
+                    UniversalDataManager.preparing=false
                     listOf(::allOnlineCheck, ::winningCheck, ::countdown).forEach { check ->
                         launch { check() }
                     }
@@ -71,7 +72,7 @@ class StartCommandExecutor : CommandExecutor, Listener {
 
     @Suppress("DEPRECATION")//TODO:sendTitle被Paper弃用（未被Spigot弃用），应当替换为showTitle，但是必要性不大
     suspend fun countdownBeforeGame(player: Player) {   // 协程函数，可以被挂起
-        UniversalDataManager.editPreparingStatus(true)
+        UniversalDataManager.preparing=true
         player.sendTitle("比赛准备开始", "", 10, 20, 10)
         delay(400)
         player.sendTitle("比赛准备开始", "", 10, 20, 10)
@@ -80,17 +81,17 @@ class StartCommandExecutor : CommandExecutor, Listener {
         delay(400)
         player.sendTitle("倒计时：", "", 10, 20, 10)
         for (i in 5 downTo 0) {
-            UniversalDataManager.getCheckinList().forEach { player ->
+            UniversalDataManager.checkinList.forEach { player ->
                 player.sendTitle(i.toString(), "", 10, 20, 10)
             }
             delay(1000)
         }
         player.sendTitle("比赛开始", "", 10, 20, 10)
-        UniversalDataManager.editPreparingStatus(false)
+        UniversalDataManager.preparing=false
     }
 
     @EventHandler
-    fun moveForbiddenExecutor(event: PlayerMoveEvent) { //TODO:这个事件没注册
+    fun moveForbiddenExecutor(event: PlayerMoveEvent) {
         event.isCancelled = UniversalDataManager.isPreparing()
     }
 
@@ -100,12 +101,12 @@ class StartCommandExecutor : CommandExecutor, Listener {
         while (true) {
             if (UniversalDataManager.isEnd()==1) {
                 var winner: Player? = null
-                UniversalDataManager.getCheckinList().forEach { player ->
+                UniversalDataManager.checkinList.forEach { player ->
                     if (!UniversalDataManager.isFail(player)) {
                         winner = player
                     }
                 }
-                for (player in UniversalDataManager.getCheckinList()) {
+                for (player in UniversalDataManager.checkinList) {
                     player.sendTitle("比赛结束", "", 10, 20, 10)
                     player.sendTitle("胜利者为：${winner?.name}", "", 20, 20, 20)//宣布胜利者
                     Bukkit.getLogger().info("胜利者为：${winner?.name}")
@@ -113,14 +114,14 @@ class StartCommandExecutor : CommandExecutor, Listener {
                 UniversalDataManager.stop()
                 break
             }else if(UniversalDataManager.isEnd()==-1) {
-                for (player in UniversalDataManager.getCheckinList()) {
+                for (player in UniversalDataManager.checkinList) {
                     player.sendTitle("比赛结束", "", 10, 20, 10)
                     player.sendTitle("本轮未决出胜者", "", 20, 20, 20)//宣布未胜利
                 }
                 UniversalDataManager.stop()
                 break
             }
-            if (!UniversalDataManager.isStart()) {  //比赛已经终止
+            if (!UniversalDataManager.isStart) {  //比赛已经终止
                 break
             }
             delay(100)
@@ -131,18 +132,24 @@ class StartCommandExecutor : CommandExecutor, Listener {
     suspend fun countdown() {
         val time: Long = 300//TODO：暂定300s，应当可以在配置文件中被修改
         for (i in time downTo 5) {
-            UniversalDataManager.getCheckinList().forEach { player ->
+            if (!UniversalDataManager.isStart) {  //比赛已经终止
+                break
+            }
+            UniversalDataManager.checkinList.forEach { player ->
                 player.sendActionBar("$i")
             }
             delay(1000)
         }
         for (i in 5 downTo 0) {
-            UniversalDataManager.getCheckinList().forEach { player ->
+            if (!UniversalDataManager.isStart) {  //比赛已经终止
+                break
+            }
+            UniversalDataManager.checkinList.forEach { player ->
                 player.sendTitle("$i", "", 10, 20, 10)
                 delay(1000)
             }
         }
-        UniversalDataManager.getCheckinList().forEach { player ->
+        UniversalDataManager.checkinList.forEach { player ->
             player.sendTitle("时间到！", "", 10, 20, 10)
             player.sendTitle("比赛结束！", "", 10, 20, 10)
         }
@@ -152,12 +159,12 @@ class StartCommandExecutor : CommandExecutor, Listener {
     suspend fun allOnlineCheck() {    //对
         //如果中途有玩家退出->紧急终止
         while (true) {
-            UniversalDataManager.getCheckinList().forEach { player ->
+            UniversalDataManager.checkinList.forEach { player ->
                 if (!player.isOnline && !UniversalDataManager.isFail(player)) {   //比赛中玩家+中途退出
                     UniversalDataManager.stop()    //需要终止游戏
                 }
             }
-            if (!UniversalDataManager.isStart()) {  //比赛已经终止，结束监听
+            if (!UniversalDataManager.isStart) {  //比赛已经终止，结束监听
                 break
             }
             delay(100)  //间隔2tick再次检测

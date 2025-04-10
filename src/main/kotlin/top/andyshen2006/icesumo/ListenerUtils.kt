@@ -10,14 +10,14 @@ import org.bukkit.event.player.PlayerQuitEvent
 class FailStatusChecker: Listener {
     @EventHandler
     @Suppress("DEPRECATION")
-    fun isFailed(event: PlayerMoveEvent) {//TODO:该函数需要重点处理
+    fun isFailed(event: PlayerMoveEvent) {
         val player = event.player
         val from=event.from
         val to = event.to
         if (from.y==to.y) { //未发生y方向移动
             return
         }
-        if (to.y<= UniversalDataManager.getHeight()) {    //低于判定高度
+        if (to.y<= UniversalDataManager.height) {    //低于判定高度
             executeFailAction(player)
         }
     }
@@ -25,7 +25,7 @@ class FailStatusChecker: Listener {
     @Suppress("DEPRECATION")
     fun executeFailAction(player: Player) {
         when{
-            !UniversalDataManager.isStart() -> return //比赛还未开始
+            !UniversalDataManager.isStart -> return //比赛还未开始
             !UniversalDataManager.isCheckin(player) -> return //该玩家没有被检录
             UniversalDataManager.isFail(player) -> return //该玩家已经失败
             else -> {
@@ -40,7 +40,7 @@ class FailStatusChecker: Listener {
 class CheckedPlayerLeaveListener : Listener {
     @EventHandler
     fun onPlayerLeave(event: PlayerQuitEvent) {
-        UniversalDataManager.getCheckinList().forEach { player ->
+        UniversalDataManager.checkinList.forEach { player ->
             if (player.uniqueId==event.player.uniqueId) {
                 UniversalDataManager.delCheckinPlayer(player)
             }
