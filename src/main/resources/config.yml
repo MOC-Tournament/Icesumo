@@ -1,8 +1,9 @@
 # 插件版本（不知道这是什么，不要随意修改）
 version: 1.0-SNAPSHOT
 # 死亡判定高度
-height: 60.0
+height: 60
 # 场馆玩家传送位置
+world: world
 stadium:
   # 第一玩家位置
   -

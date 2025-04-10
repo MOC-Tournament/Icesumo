@@ -11,6 +11,7 @@ class Icesumo : JavaPlugin() , Listener{
         server.pluginManager.registerEvents(CheckedPlayerLeaveListener(),this)
         saveResource("config.yml",false)
         saveDefaultConfig() //TODO:允许手动配置参数
+        UniversalDataManager.analyseConfig(config)
         logger.info("Enabling Ice Sumo Plugin!")
         logger.info("Ice Sumo plugin successfully enabled!")
         // Plugin startup logic

@@ -36,7 +36,7 @@ class StartCommandExecutor : CommandExecutor, Listener {
                     val player = UniversalDataManager.checkinList[i]
                     val stadiumPos = UniversalDataManager.getStadiumPos(i)
                     val location = Location(
-                        player.world,
+                        UniversalDataManager.world,
                         stadiumPos.first,
                         stadiumPos.second,
                         stadiumPos.third,

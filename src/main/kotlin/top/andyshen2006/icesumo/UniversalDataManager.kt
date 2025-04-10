@@ -1,5 +1,7 @@
 package top.andyshen2006.icesumo
 
+import org.bukkit.Bukkit
+import org.bukkit.configuration.file.FileConfiguration
 import org.bukkit.entity.Player
 import java.util.concurrent.locks.ReentrantLock
 
@@ -8,7 +10,7 @@ object UniversalDataManager{
         set(newHeight) {
             lock.lock()
             try {
-                height=newHeight
+                newHeight
             }finally {
                 lock.unlock()
             }
@@ -19,7 +21,7 @@ object UniversalDataManager{
         set(newGravePos) {
             lock.lock()
             try {
-                gravePos = newGravePos
+                newGravePos
             }finally {
                 lock.unlock()
             }
@@ -28,26 +30,45 @@ object UniversalDataManager{
         set(newStatus) {
             lock.lock()
             try {
-                preparing = newStatus
+                newStatus
             }finally {
                 lock.unlock()
             }
         }
+    var world = Bukkit.getWorlds()[0]!!
     private var failList=mutableListOf<Player>()    // TODO:一个很糟的想法，这玩意可能会导致重复判定
-    private var StadiumPos= arrayOf( Triple(-1.0,60.0,-1.0), Triple(1.0,60.0,1.0), Triple(-1.0,60.0,1.0), Triple(1.0,60.0,-1.0) )
+    private var stadiumPos= arrayOf( Triple(-1.0,60.0,-1.0), Triple(1.0,60.0,1.0), Triple(-1.0,60.0,1.0), Triple(1.0,60.0,-1.0) )
     private val lock= ReentrantLock()
 
     // Setters
     fun setStadiumPos(playerNum: Int, newStadiumPos: Triple<Double,Double, Double>) {
         lock.lock()
         try {
-            StadiumPos[playerNum-1] = newStadiumPos
+            stadiumPos[playerNum-1] = newStadiumPos
         }finally {
             lock.unlock()
         }
     }
 
     // Control Flow
+    fun analyseConfig(config: FileConfiguration) {
+        // Height Analysis
+        height = config.getInt("height")
+        // World Analysis
+        world = Bukkit.getWorld(config.getString("world")!!)!!
+        // Stadium Analysis
+        stadiumPos=config.getMapList("stadium").map { it ->
+            Triple(
+                it["x"] as Double,
+                it["y"] as Double,
+                it["z"] as Double
+            )
+        }.toTypedArray()
+        // Grave Analysis
+        val graveSection = config.getConfigurationSection("grave")!!
+        gravePos= Triple(graveSection.getDouble("x"),graveSection.getDouble("y"),graveSection.getDouble("z"))
+    }
+
     fun start() : Boolean{
         lock.lock()
         try {
@@ -132,7 +153,7 @@ object UniversalDataManager{
 
     // Getters
     fun getStadiumPos(stadiumPos:Int): Triple<Double, Double, Double> {
-        return StadiumPos[stadiumPos]
+        return UniversalDataManager.stadiumPos[stadiumPos]
     }
 
     fun isListValid() : Boolean {
@@ -185,7 +206,7 @@ object UniversalDataManager{
         }
         info+="\n"
         info+="场馆设置："
-        StadiumPos.forEach { stadium->
+        stadiumPos.forEach { stadium->
             info+="(${stadium.first},${stadium.second},${stadium.third}),"
         }
         info+="\n"
