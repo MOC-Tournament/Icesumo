@@ -27,6 +27,8 @@ commands:
     description: "修改场馆位置"
   editgrave:
     description: "修改判定高度"
+  clear:
+    description: "清除信息"
   testdelay:
     description: ""
   testedit:

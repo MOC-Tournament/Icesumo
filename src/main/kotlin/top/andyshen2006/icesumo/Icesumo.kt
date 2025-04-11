@@ -18,6 +18,10 @@ class Icesumo : JavaPlugin() , Listener{
         getCommand("start")?.setExecutor(StartCommandExecutor())
         getCommand("showinfo")?.setExecutor(InfoCommandExecutor())
         getCommand("terminate")?.setExecutor(TerminateCommandExecutor())
+        getCommand("clear")?.setExecutor { sender, command, label, args ->
+            UniversalDataManager.clear()
+            return@setExecutor true
+        }
         // Checkins
         getCommand("checkin")?.setExecutor(CheckinCommandExecutor())
         getCommand("checkinlist")?.setExecutor(CheckinlistCommandExecutor())

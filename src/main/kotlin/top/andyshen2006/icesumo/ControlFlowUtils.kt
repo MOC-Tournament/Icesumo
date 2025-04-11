@@ -25,13 +25,17 @@ class StartCommandExecutor : CommandExecutor, Listener {
         args: Array<out String>?
     ): Boolean {
         val plugin = Bukkit.getPluginManager().getPlugin("IceSumo") as Icesumo
-        if (!sender.hasPermission("icesumo.referee")) { //权限控制
-            sender.sendMessage("你没有执行该命令的权限：该命令只允许裁判员执行")
-            return false
-        }
-        if (UniversalDataManager.start()) {
-            sender.sendMessage("正在启动比赛……")
-            if (UniversalDataManager.isListValid()) {
+        when{
+            !sender.hasPermission("icesumo.referee") -> {
+                sender.sendMessage("你没有执行该命令的权限：该命令只允许裁判员执行")
+                return false
+            }
+            !UniversalDataManager.isListValid() -> {
+                sender.sendMessage("人数不符合要求，无法启动比赛")
+                return false
+            }
+            UniversalDataManager.start() -> {
+                sender.sendMessage("正在启动比赛……")
                 for (i in 0..(UniversalDataManager.checkinList.size - 1)) {  //自动传送
                     val player = UniversalDataManager.checkinList[i]
                     val stadiumPos = UniversalDataManager.getStadiumPos(i)
@@ -46,26 +50,24 @@ class StartCommandExecutor : CommandExecutor, Listener {
                     player.teleport(location)
                     Bukkit.dispatchCommand(player,"kit icesumo")
                 }
-            } else {
-                sender.sendMessage("人数不符合要求，无法启动比赛")
+                Bukkit.getScheduler().runTask(plugin, Runnable {
+                    CoroutineScope(Dispatchers.Default).launch {    //协程，启动！
+                        val countdownJob = UniversalDataManager.checkinList.map { player ->            //赛前倒计时
+                            async { countdownBeforeGame(player) }
+                        }
+                        countdownJob.awaitAll()
+                        UniversalDataManager.preparing=false
+                        listOf(::allOnlineCheck, ::winningCheck, ::countdown).forEach { check ->
+                            launch { check() }
+                        }
+
+                    }
+                })
+            }
+            else -> {
+                sender.sendMessage("你不能开始一场已经开始的比赛")
                 return false
             }
-            Bukkit.getScheduler().runTask(plugin, Runnable {
-                CoroutineScope(Dispatchers.Default).launch {    //协程，启动！
-                    val countdownJob = UniversalDataManager.checkinList.map { player ->            //赛前倒计时
-                        async { countdownBeforeGame(player) }
-                    }
-                    countdownJob.awaitAll()
-                    UniversalDataManager.preparing=false
-                    listOf(::allOnlineCheck, ::winningCheck, ::countdown).forEach { check ->
-                        launch { check() }
-                    }
-
-                }
-            })
-        } else {
-            sender.sendMessage("你不能开始一场已经开始的比赛")
-            return false
         }
         return true
     }

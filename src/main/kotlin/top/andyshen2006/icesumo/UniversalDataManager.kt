@@ -101,6 +101,16 @@ object UniversalDataManager{
         return true
     }
 
+    fun clear() {
+        lock.lock()
+        try {
+            checkinList.clear()
+            failList.clear()
+        }finally {
+            lock.unlock()
+        }
+    }
+
     fun addCheckinPlayer(player: Player): Boolean {
         lock.lock()
         try {
@@ -124,13 +134,8 @@ object UniversalDataManager{
 
     fun delCheckinPlayer(player: Player): Boolean {
         lock.lock()
-        lock.lock()
         try {
-            checkinList.forEach { checkedPlayer->
-                if (checkedPlayer.uniqueId==player.uniqueId) {
-                    checkinList.remove(checkedPlayer)
-                }
-            }
+            checkinList.removeIf { it.uniqueId==player.uniqueId }
         }finally {
             lock.unlock()
         }
