@@ -7,7 +7,9 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.bukkit.Bukkit
+import org.bukkit.GameMode
 import org.bukkit.Location
+import org.bukkit.attribute.Attribute
 import org.bukkit.command.Command
 import org.bukkit.command.CommandExecutor
 import org.bukkit.command.CommandSender
@@ -15,6 +17,8 @@ import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerMoveEvent
+import org.bukkit.potion.PotionEffect
+import org.bukkit.potion.PotionEffectType
 
 class StartCommandExecutor : CommandExecutor, Listener {
     @Suppress("Deprecation")
@@ -34,7 +38,10 @@ class StartCommandExecutor : CommandExecutor, Listener {
                 sender.sendMessage("人数不符合要求，无法启动比赛")
                 return false
             }
-            UniversalDataManager.start() -> {
+            UniversalDataManager.isRuleValid()!="TT" -> {
+                sender.sendMessage("服务器规则不符合要求，无法启动比赛")
+            }
+            UniversalDataManager.start() -> {   //规则请参见：https://moc.miraheze.org/wiki/?curid=452
                 sender.sendMessage("正在启动比赛……")
                 for (i in 0..(UniversalDataManager.checkinList.size - 1)) {  //自动传送
                     val player = UniversalDataManager.checkinList[i]
@@ -49,7 +56,21 @@ class StartCommandExecutor : CommandExecutor, Listener {
                     )
                     player.teleport(location)
                     Bukkit.dispatchCommand(player,"kit icesumo")
+                    player.gameMode= GameMode.SURVIVAL //设置为生存模式
+                    player.activePotionEffects.forEach{ //移除所有效果
+                        player.removePotionEffect(it.type)
+                    }
+                    Attribute.entries.forEach {attribute -> //移除所有属性
+                        val attributeInstance=player.getAttribute(attribute)
+                        if (attributeInstance!=null){
+                            attributeInstance.baseValue=attributeInstance.defaultValue
+                        }
+                    }
+                    player.inventory.clear()    //清空背包
+                    player.addPotionEffect(PotionEffect(PotionEffectType.RESISTANCE, 3600, 5, false))   //抗性提升
+                    player.addPotionEffect(PotionEffect(PotionEffectType.REGENERATION, 3600, 5, false)) //生命恢复
                 }
+                UniversalDataManager.world.time=6000    //调整为白天
                 Bukkit.getScheduler().runTask(plugin, Runnable {
                     CoroutineScope(Dispatchers.Default).launch {    //协程，启动！
                         val countdownJob = UniversalDataManager.checkinList.map { player ->            //赛前倒计时
@@ -72,7 +93,7 @@ class StartCommandExecutor : CommandExecutor, Listener {
         return true
     }
 
-    @Suppress("DEPRECATION")//TODO:sendTitle被Paper弃用（未被Spigot弃用），应当替换为showTitle，但是必要性不大
+    @Suppress("DEPRECATION")
     suspend fun countdownBeforeGame(player: Player) {   // 协程函数，可以被挂起
         UniversalDataManager.preparing=true
         player.sendTitle("比赛准备开始", "", 10, 20, 10)
@@ -177,6 +198,10 @@ class StartCommandExecutor : CommandExecutor, Listener {
 
 class TerminateCommandExecutor : CommandExecutor {  // TODO:1.加上原因的记录 2.加上部分自动判定（如玩家中途退出等）
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>?): Boolean {
+        if(!sender.hasPermission("icesumo.referee")) {
+            sender.sendMessage("你没有执行该命令的权限：该命令只允许裁判员执行")
+            return false
+        }
         sender.sendMessage("比赛被紧急终止，原因：")
         UniversalDataManager.stop()
         return true

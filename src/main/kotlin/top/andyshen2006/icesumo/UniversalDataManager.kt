@@ -194,7 +194,19 @@ object UniversalDataManager{
     fun isPreparing(): Boolean{
         return preparing
     }
-    // Showcase Information
+    // Server checker
+    @Suppress("Deprecation")
+    fun isRuleValid(): String{
+        var result = ""
+        result += if (world.getGameRuleValue("doDaylightCycle").toBoolean()) {
+            "F"
+        }else{
+            "T"
+        }
+        return result
+    }
+
+    // Showcase Information (For Maintainers)
     fun showInfo():String {
         var info=""
         info+="设定高度:$height\n"

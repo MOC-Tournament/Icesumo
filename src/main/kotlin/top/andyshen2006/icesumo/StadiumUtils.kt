@@ -6,6 +6,10 @@ import org.bukkit.command.CommandSender
 
 class EditHeightCommandExecutor : CommandExecutor {
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>?): Boolean {
+        if(!sender.hasPermission("icesumo.stadium")) {
+            sender.sendMessage("你没有执行该命令的权限：该命令只允许场地管理员执行")
+            return false
+        }
         val newHeight= args?.get(0)?.toInt()
         if (newHeight == null) {
             sender.sendMessage("判定高度不能为空！")

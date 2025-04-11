@@ -15,10 +15,13 @@ import top.andyshen2006.icesumo.TempDataManager.testFlag
 // Test1: coroutine delay(OK)
 class TestDelayCommandExecutor : CommandExecutor {
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>?): Boolean {
+        if(!sender.hasPermission("icesumo.maintainer")) {
+            sender.sendMessage("你没有执行该命令的权限：该命令只允许运维执行")
+            return false
+        }
         if (args == null) {
             return false
         }
-
         Bukkit.getPluginManager().getPlugin("Icesumo")?.let {
             Bukkit.getScheduler().runTask(it, Runnable {
                 CoroutineScope(Dispatchers.Default).launch{
@@ -41,6 +44,10 @@ object TempDataManager{
 // Test2: Coroutine listener(OK)
 class StartListenCommandExecutor : CommandExecutor {
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>): Boolean {
+        if(!sender.hasPermission("icesumo.maintainer")) {
+            sender.sendMessage("你没有执行该命令的权限：该命令只允许运维执行")
+            return false
+        }
         Bukkit.getPluginManager().getPlugin("Icesumo")?.let {
             Bukkit.getScheduler().runTask(it, Runnable {
                 CoroutineScope(Dispatchers.Default).launch{
@@ -64,6 +71,10 @@ class StartListenCommandExecutor : CommandExecutor {
 
 class EditFlagCommandExecutor : CommandExecutor {
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>?): Boolean {
+        if(!sender.hasPermission("icesumo.maintainer")) {
+            sender.sendMessage("你没有执行该命令的权限：该命令只允许运维执行")
+            return false
+        }
         sender.sendMessage("修改成功")
         testFlag =true
         return true
@@ -72,6 +83,10 @@ class EditFlagCommandExecutor : CommandExecutor {
 
 class KitCommandExecutor : CommandExecutor {    //测试工具：强制使用dispatchCommand
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>?): Boolean {
+        if(!sender.hasPermission("icesumo.maintainer")) {
+            sender.sendMessage("你没有执行该命令的权限：该命令只允许运维执行")
+            return false
+        }
         val player = sender
         Bukkit.dispatchCommand(player,"kit testkit")
         return true

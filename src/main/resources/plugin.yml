@@ -4,36 +4,63 @@ author: "AndyShen2006"
 main: top.andyshen2006.icesumo.Icesumo
 api-version: '1.21'
 commands:
+  # Athlete's Command
+  checkin:
+    description: "检录"
+    usage: "/checkin"
+  uncheckin:
+    description: "取消检录"
+    usage: "/uncheckin"
+  # Referee's Command
   start:
     description: "开始比赛"
     usage: "/start"
   terminate:
     description: "终止比赛"
-    usage: "/terminate"
-  showinfo:
-    description: ""
-  checkin:
-    description: "检录"
-    usage: "/checkin"
+    usage: "/terminate <reason>"
   checkinlist:
     description: "输出检录列表"
     usage: "/checkinlist"
-  uncheckin:
-    description: "取消检录"
-    usage: "/uncheckin"
+  checkin_result:
+    description: "输出检录结果"
+    usage: "/checkin_result"
+  # Stadium Administrator's Command
+  checkrule:
+    description: "检查规则"
+  setrule:
+    description: "重置规则"
   editheight:
     description: "修改判定高度"
   editpos:
     description: "修改场馆位置"
   editgrave:
     description: "修改判定高度"
+  # Maintainer's Command
+  showinfo:
+    description: "显示技术信息"
   clear:
     description: "清除信息"
   testdelay:
-    description: ""
+    description: "测试指令"
   testedit:
-    description: ""
+    description: "测试指令"
   testlisten:
-    description: ""
+    description: "测试指令"
   testkit:
-    description: ""
+    description: "测试指令"
+permissions:
+  icesumo.maintainer:
+    description: 运维权限，可以使用所有调试语句，继承自icesumo.stadium，icesumo.referee。
+    children:
+      icesumo.stadium: true
+      icesumo.referee: true
+  icesumo.stadium:
+    description: 场地管理员，可以按具体临时修改场地位置（永久修改应更改config.yml），继承自icesumo.athlete。
+    children:
+      icesumo.athlete: true
+  icesumo.referee:
+    description: 裁判，可以宣布比赛开始/结束，继承自icesumo.athlete。
+    children:
+      icesumo.athlete: true
+  icesumo.athlete:
+    description: 运动员，可以使用检录等指令。
