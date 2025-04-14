@@ -21,7 +21,7 @@ import org.bukkit.potion.PotionEffect
 import org.bukkit.potion.PotionEffectType
 
 class StartCommandExecutor : CommandExecutor, Listener {
-    @Suppress("Deprecation")
+    @Suppress("Deprecation", "UnstableApiUsage")
     override fun onCommand(
         sender: CommandSender,
         command: Command,
@@ -38,7 +38,7 @@ class StartCommandExecutor : CommandExecutor, Listener {
                 sender.sendMessage("人数不符合要求，无法启动比赛")
                 return false
             }
-            UniversalDataManager.isRuleValid()!="TT" -> {
+            UniversalDataManager.isRuleValid()!="T" -> {
                 sender.sendMessage("服务器规则不符合要求，无法启动比赛")
             }
             UniversalDataManager.start() -> {   //规则请参见：https://moc.miraheze.org/wiki/?curid=452
@@ -55,20 +55,49 @@ class StartCommandExecutor : CommandExecutor, Listener {
                         player.pitch
                     )
                     player.teleport(location)
-                    Bukkit.dispatchCommand(player,"kit icesumo")
                     player.gameMode= GameMode.SURVIVAL //设置为生存模式
                     player.activePotionEffects.forEach{ //移除所有效果
                         player.removePotionEffect(it.type)
                     }
-                    Attribute.entries.forEach {attribute -> //移除所有属性
-                        val attributeInstance=player.getAttribute(attribute)
-                        if (attributeInstance!=null){
-                            attributeInstance.baseValue=attributeInstance.defaultValue
-                        }
-                    }
+//                    Attribute.entries.forEach {attribute -> //移除所有属性
+//                        val attributeInstance=player.getAttribute(attribute)
+//                        if (attributeInstance!=null){
+//                            attributeInstance.baseValue=attributeInstance.defaultValue
+//                        }
+//                    }
+                    // Reference: https://github.com/MOC-Tournament/StatCleaner/blob/main/src/main/java/org/moc/statCleaner/command/CommandReset.java
+                    // TODO: 应该替换为上面的Bukkit API
+                    setAttribute(player, Attribute.GENERIC_ARMOR, 0.0)
+                    setAttribute(player, Attribute.GENERIC_ARMOR_TOUGHNESS, 0.0)
+                    setAttribute(player, Attribute.GENERIC_ATTACK_DAMAGE, 1.0)
+                    setAttribute(player, Attribute.GENERIC_ATTACK_KNOCKBACK, 0.0)
+                    setAttribute(player, Attribute.GENERIC_ATTACK_SPEED, 4.0)
+                    setAttribute(player, Attribute.GENERIC_BURNING_TIME, 1.0)
+                    setAttribute(player, Attribute.GENERIC_EXPLOSION_KNOCKBACK_RESISTANCE, .00)
+                    setAttribute(player, Attribute.GENERIC_FALL_DAMAGE_MULTIPLIER, 1.0)
+                    setAttribute(player, Attribute.GENERIC_GRAVITY, 0.08)
+                    setAttribute(player, Attribute.GENERIC_JUMP_STRENGTH, 0.42)
+                    setAttribute(player, Attribute.GENERIC_KNOCKBACK_RESISTANCE, 0.0)
+                    setAttribute(player, Attribute.GENERIC_LUCK, 0.0)
+                    setAttribute(player, Attribute.GENERIC_MAX_ABSORPTION, 0.0)
+                    setAttribute(player, Attribute.GENERIC_MOVEMENT_SPEED, 0.1)
+                    setAttribute(player, Attribute.GENERIC_OXYGEN_BONUS, 0.0)
+                    setAttribute(player, Attribute.GENERIC_SAFE_FALL_DISTANCE, 3.0)
+                    setAttribute(player, Attribute.GENERIC_SCALE, 1.0)
+                    setAttribute(player, Attribute.GENERIC_STEP_HEIGHT, 0.6)
+                    setAttribute(player, Attribute.GENERIC_WATER_MOVEMENT_EFFICIENCY, 0.0)
+                    setAttribute(player, Attribute.PLAYER_BLOCK_BREAK_SPEED, 1.0)
+                    setAttribute(player, Attribute.PLAYER_BLOCK_INTERACTION_RANGE, 4.5)
+                    setAttribute(player, Attribute.PLAYER_ENTITY_INTERACTION_RANGE, 3.0)
+                    setAttribute(player, Attribute.PLAYER_MINING_EFFICIENCY, 0.0)
+                    setAttribute(player, Attribute.PLAYER_SNEAKING_SPEED, 0.3)
+                    setAttribute(player, Attribute.PLAYER_SUBMERGED_MINING_SPEED, 0.2)
+                    setAttribute(player, Attribute.PLAYER_SWEEPING_DAMAGE_RATIO, 0.0)
                     player.inventory.clear()    //清空背包
                     player.addPotionEffect(PotionEffect(PotionEffectType.RESISTANCE, 3600, 5, false))   //抗性提升
                     player.addPotionEffect(PotionEffect(PotionEffectType.REGENERATION, 3600, 5, false)) //生命恢复
+                    Bukkit.getLogger().info("Giving Kit to ${player.name} now")
+                    Bukkit.getLogger().info("Status ${Bukkit.dispatchCommand(player,"kit testkit")}")
                 }
                 UniversalDataManager.world.time=6000    //调整为白天
                 Bukkit.getScheduler().runTask(plugin, Runnable {
@@ -91,6 +120,11 @@ class StartCommandExecutor : CommandExecutor, Listener {
             }
         }
         return true
+    }
+
+    fun setAttribute(player: Player, attribute: Attribute, value: Double) {
+        val attributeInstance = player.getAttribute(attribute)
+        attributeInstance?.baseValue = value
     }
 
     @Suppress("DEPRECATION")
@@ -153,7 +187,7 @@ class StartCommandExecutor : CommandExecutor, Listener {
 
     @Suppress("Deprecation")
     suspend fun countdown() {
-        val time: Long = 300//TODO：暂定300s，应当可以在配置文件中被修改
+        val time: Long = UniversalDataManager.time
         for (i in time downTo 5) {
             if (!UniversalDataManager.isStart) {  //比赛已经终止
                 break
@@ -175,6 +209,13 @@ class StartCommandExecutor : CommandExecutor, Listener {
         UniversalDataManager.checkinList.forEach { player ->
             player.sendTitle("时间到！", "", 10, 20, 10)
             player.sendTitle("比赛结束！", "", 10, 20, 10)
+
+        }
+        if(UniversalDataManager.isEnd()==0) {
+            UniversalDataManager.checkinList.forEach { player ->
+                player.sendTitle("比赛结束", "", 10, 20, 10)
+                player.sendTitle("本轮未决出胜者", "", 20, 20, 20)//宣布未胜利
+            }
         }
         UniversalDataManager.stop()//时间到，终止比赛
     }
@@ -202,7 +243,7 @@ class TerminateCommandExecutor : CommandExecutor {  // TODO:1.加上原因的记
             sender.sendMessage("你没有执行该命令的权限：该命令只允许裁判员执行")
             return false
         }
-        sender.sendMessage("比赛被紧急终止，原因：")
+        sender.sendMessage("比赛被紧急终止，原因：${args?.get(0)}")
         UniversalDataManager.stop()
         return true
     }

@@ -6,11 +6,11 @@ import org.bukkit.entity.Player
 import java.util.concurrent.locks.ReentrantLock
 
 object UniversalDataManager{
-    var height=60
+    var height=40
         set(newHeight) {
             lock.lock()
             try {
-                newHeight
+                field=newHeight
             }finally {
                 lock.unlock()
             }
@@ -21,7 +21,7 @@ object UniversalDataManager{
         set(newGravePos) {
             lock.lock()
             try {
-                newGravePos
+                field=newGravePos
             }finally {
                 lock.unlock()
             }
@@ -30,12 +30,13 @@ object UniversalDataManager{
         set(newStatus) {
             lock.lock()
             try {
-                newStatus
+                field=newStatus
             }finally {
                 lock.unlock()
             }
         }
     var world = Bukkit.getWorlds()[0]!!
+    var time: Long=0
     private var failList=mutableListOf<Player>()    // TODO:一个很糟的想法，这玩意可能会导致重复判定
     private var stadiumPos= arrayOf( Triple(-1.0,60.0,-1.0), Triple(1.0,60.0,1.0), Triple(-1.0,60.0,1.0), Triple(1.0,60.0,-1.0) )
     private val lock= ReentrantLock()
@@ -56,6 +57,8 @@ object UniversalDataManager{
         height = config.getInt("height")
         // World Analysis
         world = Bukkit.getWorld(config.getString("world")!!)!!
+        // Time Analysis
+        time = config.getLong("time")
         // Stadium Analysis
         stadiumPos=config.getMapList("stadium").map { it ->
             Triple(

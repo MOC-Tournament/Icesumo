@@ -2,6 +2,8 @@
 version: 1.0-SNAPSHOT
 # 死亡判定高度
 height: 60
+# 比赛时间，默认5分钟
+time: 300
 # 场馆玩家传送位置
 world: world
 stadium:
