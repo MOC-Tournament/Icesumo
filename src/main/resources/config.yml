@@ -1,5 +1,5 @@
 # 插件版本（不知道这是什么，不要随意修改）
-version: 1.0-SNAPSHOT
+version: 1.0-Alpha
 # 死亡判定高度
 height: 60
 # 比赛时间，默认5分钟
