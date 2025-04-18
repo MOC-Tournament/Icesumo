@@ -37,8 +37,30 @@ class CheckinCommandExecutor : CommandExecutor {
             }
 
             else -> {
-                sender.sendMessage("检录对象非法/格式错误/没有相关权限（运动员/裁判员）")
-                return false
+                try {
+                    val targets=Bukkit.getServer().selectEntities(
+                        sender,
+                        "@p"
+                    )
+                    if (targets.size>1) {
+                        throw IllegalArgumentException("不可能出现多个最近玩家")
+                    }
+                    val playerName = targets[0].name
+                    val player=Bukkit.getPlayer(playerName)
+                    if (player == null) {
+                        throw IllegalArgumentException("不可能出现无法检录的最近玩家")
+                    }
+                    sender.sendMessage("正在检录$playerName")
+                    if (UniversalDataManager.addCheckinPlayer(player)) {
+                        sender.sendMessage(playerName + "检录成功！")
+                    } else {
+                        sender.sendMessage(playerName + "你已经检录！")
+                    }
+                    return true
+                }catch (_:IllegalArgumentException){
+                    sender.sendMessage("检录对象非法/格式错误/没有相关权限（运动员/裁判员）")
+                    return false
+                }
             }
         }
 
@@ -117,10 +139,31 @@ class UncheckinCommandExecutor : CommandExecutor {  //TODO: 应当添加功能�
                 }
                 return true
             }
-
             else -> {
-                sender.sendMessage("检录对象非法/格式错误/没有相关权限（运动员/裁判员）")
-                return false
+                try {
+                    val targets=Bukkit.getServer().selectEntities(
+                        sender,
+                        "@p"
+                    )
+                    if (targets.size>1) {
+                        throw IllegalArgumentException("不可能出现多个最近玩家")
+                    }
+                    val playerName = targets[0].name
+                    val player=Bukkit.getPlayer(playerName)
+                    if (player == null) {
+                        throw IllegalArgumentException("不可能出现无法取消检录的最近玩家")
+                    }
+                    sender.sendMessage("正在取消检录$playerName")
+                    if (UniversalDataManager.delCheckinPlayer(player)) {
+                        sender.sendMessage(playerName + "取消检录成功！")
+                    } else {
+                        sender.sendMessage(playerName + "你没有检录过！")
+                    }
+                    return true
+                }catch (_:IllegalArgumentException){
+                    sender.sendMessage("检录对象非法/格式错误/没有相关权限（运动员/裁判员）")
+                    return false
+                }
             }
         }
     }

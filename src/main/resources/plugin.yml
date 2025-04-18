@@ -48,6 +48,8 @@ commands:
     description: "测试指令"
   testkit:
     description: "测试指令"
+  testwrite:
+    description: "测试指令"
 permissions:
   icesumo.maintainer:
     description: 运维权限，可以使用所有调试语句，继承自icesumo.stadium，icesumo.referee。

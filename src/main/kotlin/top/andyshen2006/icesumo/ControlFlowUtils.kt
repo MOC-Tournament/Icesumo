@@ -167,6 +167,8 @@ class StartCommandExecutor : CommandExecutor, Listener {
                     player.sendTitle("比赛结束", "", 10, 20, 10)
                     player.sendTitle("胜利者为：${winner?.name}", "", 20, 20, 20)//宣布胜利者
                     Bukkit.getLogger().info("胜利者为：${winner?.name}")
+                    CSVManager.appendResult(UniversalDataManager.resultFile!!,winner?.uniqueId.toString(),winner?.name!!,true,
+                        UniversalDataManager.restTime)
                 }
                 UniversalDataManager.stop()
                 break
@@ -187,29 +189,28 @@ class StartCommandExecutor : CommandExecutor, Listener {
 
     @Suppress("Deprecation")
     suspend fun countdown() {
-        val time: Long = UniversalDataManager.time
-        for (i in time downTo 5) {
-            if (!UniversalDataManager.isStart) {  //比赛已经终止
-                break
-            }
-            UniversalDataManager.checkinList.forEach { player ->
-                player.sendActionBar("$i")
-            }
-            delay(1000)
-        }
-        for (i in 5 downTo 0) {
-            if (!UniversalDataManager.isStart) {  //比赛已经终止
-                break
-            }
-            UniversalDataManager.checkinList.forEach { player ->
-                player.sendTitle("$i", "", 10, 20, 10)
-                delay(1000)
+        while (UniversalDataManager.restTime>0) {
+            when{
+                !UniversalDataManager.isStart->break
+                UniversalDataManager.restTime>5-> {
+                    UniversalDataManager.checkinList.forEach { player ->
+                        player.sendActionBar("${UniversalDataManager.restTime}")
+                    }
+                    UniversalDataManager.restTime--
+                    delay(1000)
+                }
+                else -> {
+                    UniversalDataManager.checkinList.forEach { player ->
+                        player.sendTitle("${UniversalDataManager.restTime}", "", 10, 20, 10)
+                    }
+                    UniversalDataManager.restTime--
+                    delay(1000)
+                }
             }
         }
         UniversalDataManager.checkinList.forEach { player ->
             player.sendTitle("时间到！", "", 10, 20, 10)
             player.sendTitle("比赛结束！", "", 10, 20, 10)
-
         }
         if(UniversalDataManager.isEnd()==0) {
             UniversalDataManager.checkinList.forEach { player ->
@@ -220,11 +221,15 @@ class StartCommandExecutor : CommandExecutor, Listener {
         UniversalDataManager.stop()//时间到，终止比赛
     }
 
+    @Suppress("Deprecation")
     suspend fun allOnlineCheck() {    //对
         //如果中途有玩家退出->紧急终止
         while (true) {
             UniversalDataManager.checkinList.forEach { player ->
                 if (!player.isOnline && !UniversalDataManager.isFail(player)) {   //比赛中玩家+中途退出
+                    UniversalDataManager.checkinList.forEach { player ->
+                        player.sendTitle("比赛被紧急终止，原因：游戏中途有玩家退出", "", 10, 20, 10)
+                    }
                     UniversalDataManager.stop()    //需要终止游戏
                 }
             }
@@ -237,13 +242,16 @@ class StartCommandExecutor : CommandExecutor, Listener {
 
 }
 
-class TerminateCommandExecutor : CommandExecutor {  // TODO:1.加上原因的记录 2.加上部分自动判定（如玩家中途退出等）
+class TerminateCommandExecutor : CommandExecutor {
+    @Suppress("Deprecation")
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>?): Boolean {
         if(!sender.hasPermission("icesumo.referee")) {
             sender.sendMessage("你没有执行该命令的权限：该命令只允许裁判员执行")
             return false
         }
-        sender.sendMessage("比赛被紧急终止，原因：${args?.get(0)}")
+        UniversalDataManager.checkinList.forEach { player ->
+            player.sendTitle("比赛被紧急终止，原因：${args?.get(0)}", "", 10, 20, 10)
+        }
         UniversalDataManager.stop()
         return true
     }

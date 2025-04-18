@@ -44,6 +44,7 @@ class Icesumo : JavaPlugin() , Listener{
         getCommand("testlisten")?.setExecutor(StartListenCommandExecutor())
         getCommand("testedit")?.setExecutor(EditFlagCommandExecutor())
         getCommand("testkit")?.setExecutor(KitCommandExecutor())
+        getCommand("testwrite")?.setExecutor(TestWriteCommandExecutor())
 
     }
 

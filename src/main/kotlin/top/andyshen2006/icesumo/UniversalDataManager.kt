@@ -3,13 +3,16 @@ package top.andyshen2006.icesumo
 import org.bukkit.Bukkit
 import org.bukkit.configuration.file.FileConfiguration
 import org.bukkit.entity.Player
+import java.io.File
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.concurrent.locks.ReentrantLock
 
 object UniversalDataManager{
     var height=40
         set(newHeight) {
-            lock.lock()
             try {
+                lock.lock()
                 field=newHeight
             }finally {
                 lock.unlock()
@@ -19,8 +22,8 @@ object UniversalDataManager{
     var checkinList=mutableListOf<Player>()
     var gravePos = Triple(0.0, 70.0, 0.0)
         set(newGravePos) {
-            lock.lock()
             try {
+                lock.lock()
                 field=newGravePos
             }finally {
                 lock.unlock()
@@ -28,8 +31,8 @@ object UniversalDataManager{
         }
     var preparing = false
         set(newStatus) {
-            lock.lock()
             try {
+                lock.lock()
                 field=newStatus
             }finally {
                 lock.unlock()
@@ -37,14 +40,18 @@ object UniversalDataManager{
         }
     var world = Bukkit.getWorlds()[0]!!
     var time: Long=0
-    private var failList=mutableListOf<Player>()    // TODO:一个很糟的想法，这玩意可能会导致重复判定
+    var restTime:Long =-1
+    private var failList=mutableListOf<Player>()    // TODO:其实应该给checkinList里面的玩家附加属性的，可惜当时没做，等哪次Refactor的时候再搞吧
     private var stadiumPos= arrayOf( Triple(-1.0,60.0,-1.0), Triple(1.0,60.0,1.0), Triple(-1.0,60.0,1.0), Triple(1.0,60.0,-1.0) )
     private val lock= ReentrantLock()
+    private val plugin = Bukkit.getPluginManager().getPlugin("Icesumo") as Icesumo
+    private val dataDir= File(plugin.dataFolder, "results")
+    var resultFile: File? = null
 
     // Setters
     fun setStadiumPos(playerNum: Int, newStadiumPos: Triple<Double,Double, Double>) {
-        lock.lock()
         try {
+            lock.lock()
             stadiumPos[playerNum-1] = newStadiumPos
         }finally {
             lock.unlock()
@@ -73,15 +80,17 @@ object UniversalDataManager{
     }
 
     fun start() : Boolean{
-        lock.lock()
         try {
+            lock.lock()
             if (!isStart) {
                 failList.clear()
                 isStart = true
+                resultFile= File(dataDir, "results-${LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd-HHmmSS"))}.csv")
+                restTime=time
+                CSVManager.startWriteResult(resultFile!!)
             }else{
                 return false
             }
-
         } finally {
             lock.unlock()
         }
@@ -89,8 +98,8 @@ object UniversalDataManager{
     }
 
     fun stop() : Boolean{
-        lock.lock()
         try {
+            lock.lock()
             if (isStart) {
                 failList.clear()
                 checkinList.clear()
@@ -105,8 +114,8 @@ object UniversalDataManager{
     }
 
     fun clear() {
-        lock.lock()
         try {
+            lock.lock()
             checkinList.clear()
             failList.clear()
         }finally {
@@ -115,8 +124,8 @@ object UniversalDataManager{
     }
 
     fun addCheckinPlayer(player: Player): Boolean {
-        lock.lock()
         try {
+            lock.lock()
             var flag=true
             checkinList.forEach { checkedPlayer ->
                 when{
@@ -136,9 +145,28 @@ object UniversalDataManager{
     }
 
     fun delCheckinPlayer(player: Player): Boolean {
-        lock.lock()
         try {
-            checkinList.removeIf { it.uniqueId==player.uniqueId }
+            lock.lock()
+            var flag=false
+            checkinList.forEach { checkedPlayer ->
+                when{
+                    checkedPlayer.uniqueId==player.uniqueId -> flag=true
+                }
+            }
+            if (!flag) {
+                return false
+            }else {
+                checkinList.removeIf { it.uniqueId == player.uniqueId }
+                flag=false
+                failList.forEach { failedPlayer->
+                    when{
+                        failedPlayer.uniqueId==player.uniqueId -> flag=true
+                    }
+                }
+                if (flag) {
+                    failList.removeIf { it.uniqueId == player.uniqueId }
+                }
+            }
         }finally {
             lock.unlock()
         }
@@ -146,9 +174,9 @@ object UniversalDataManager{
     }
 
     fun playerFail(player: Player): Boolean {
-        lock.lock()
         try {
-            if (failList.contains(player)) {    //TODO:可能需要修改
+            lock.lock()
+            if (failList.contains(player)) {
                 throw UnsupportedOperationException("不可能出现两次失败")
             }else{
                 failList.add(player)
