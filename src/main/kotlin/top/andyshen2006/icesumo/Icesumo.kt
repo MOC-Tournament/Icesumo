@@ -9,7 +9,7 @@ class Icesumo : JavaPlugin() , Listener{
         // Plugin startup logic
         server.pluginManager.registerEvents(FailStatusChecker(), this)
         server.pluginManager.registerEvents(StartCommandExecutor(),this)
-        server.pluginManager.registerEvents(CheckedPlayerLeaveListener(),this)
+//        server.pluginManager.registerEvents(CheckedPlayerLeaveListener(),this)
         saveResource("config.yml",false)
         saveDefaultConfig() //TODO:允许手动配置参数
         UniversalDataManager.analyseConfig(config)
@@ -21,7 +21,7 @@ class Icesumo : JavaPlugin() , Listener{
         getCommand("terminate")?.setExecutor(TerminateCommandExecutor())
         getCommand("clear")?.setExecutor { sender, command, label, args ->
             if(!sender.hasPermission("icesumo.maintainer")) {
-                sender.sendMessage("你没有执行该命令的权限：该命令只允许运维执行")
+                MessageUtils.sendMessage(sender,"你没有执行该命令的权限：该命令只允许运维执行")
                 return@setExecutor false
             }
             UniversalDataManager.clear()

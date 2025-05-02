@@ -31,18 +31,18 @@ class StartCommandExecutor : CommandExecutor, Listener {
         val plugin = Bukkit.getPluginManager().getPlugin("IceSumo") as Icesumo
         when{
             !sender.hasPermission("icesumo.referee") -> {
-                sender.sendMessage("你没有执行该命令的权限：该命令只允许裁判员执行")
+                MessageUtils.sendMessage(sender,"你没有执行该命令的权限：该命令只允许裁判员执行")
                 return false
             }
             !UniversalDataManager.isListValid() -> {
-                sender.sendMessage("人数不符合要求，无法启动比赛")
+                MessageUtils.sendMessage(sender,"人数不符合要求，无法启动比赛")
                 return false
             }
             UniversalDataManager.isRuleValid()!="T" -> {
-                sender.sendMessage("服务器规则不符合要求，无法启动比赛")
+                MessageUtils.sendMessage(sender,"服务器规则不符合要求，无法启动比赛")
             }
             UniversalDataManager.start() -> {   //规则请参见：https://moc.miraheze.org/wiki/?curid=452
-                sender.sendMessage("正在启动比赛……")
+                MessageUtils.sendMessage(sender,"正在启动比赛……")
                 for (i in 0..(UniversalDataManager.checkinList.size - 1)) {  //自动传送
                     val player = UniversalDataManager.checkinList[i]
                     val stadiumPos = UniversalDataManager.getStadiumPos(i)
@@ -55,7 +55,7 @@ class StartCommandExecutor : CommandExecutor, Listener {
                         player.pitch
                     )
                     player.teleport(location)
-                    player.gameMode= GameMode.SURVIVAL //设置为生存模式
+                    player.gameMode= GameMode.ADVENTURE //设置为冒险模式
                     player.activePotionEffects.forEach{ //移除所有效果
                         player.removePotionEffect(it.type)
                     }
@@ -97,7 +97,8 @@ class StartCommandExecutor : CommandExecutor, Listener {
                     player.addPotionEffect(PotionEffect(PotionEffectType.RESISTANCE, 3600, 5, false))   //抗性提升
                     player.addPotionEffect(PotionEffect(PotionEffectType.REGENERATION, 3600, 5, false)) //生命恢复
                     Bukkit.getLogger().info("Giving Kit to ${player.name} now")
-                    Bukkit.getLogger().info("Status ${Bukkit.dispatchCommand(player,"kit testkit")}")
+                    Bukkit.getLogger().info("Status ${Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
+                        "sudo command ${player.name} kit icesumo")}")
                 }
                 UniversalDataManager.world.time=6000    //调整为白天
                 Bukkit.getScheduler().runTask(plugin, Runnable {
@@ -107,15 +108,22 @@ class StartCommandExecutor : CommandExecutor, Listener {
                         }
                         countdownJob.awaitAll()
                         UniversalDataManager.preparing=false
-                        listOf(::allOnlineCheck, ::winningCheck, ::countdown).forEach { check ->
-                            launch { check() }
+                        val gameJob=listOf(::allOnlineCheck, ::winningCheck, ::countdown,::onFailPlayerLeave).map { check ->
+                            async { check() }
                         }
-
+                        gameJob.awaitAll()
+                        UniversalDataManager.checkinList.forEach { player ->
+                            player.activePotionEffects.forEach{ //移除所有效果
+                                player.removePotionEffect(it.type)
+                            }
+                            player.inventory.clear()    //清空背包
+                        }
+                        UniversalDataManager.clear()
                     }
                 })
             }
             else -> {
-                sender.sendMessage("你不能开始一场已经开始的比赛")
+                MessageUtils.sendMessage(sender,"你不能开始一场已经开始的比赛")
                 return false
             }
         }
@@ -167,9 +175,9 @@ class StartCommandExecutor : CommandExecutor, Listener {
                     player.sendTitle("比赛结束", "", 10, 20, 10)
                     player.sendTitle("胜利者为：${winner?.name}", "", 20, 20, 20)//宣布胜利者
                     Bukkit.getLogger().info("胜利者为：${winner?.name}")
-                    CSVManager.appendResult(UniversalDataManager.resultFile!!,winner?.uniqueId.toString(),winner?.name!!,true,
-                        UniversalDataManager.restTime)
                 }
+                CSVManager.appendResult(UniversalDataManager.resultFile!!,winner?.uniqueId.toString(),winner?.name!!,true,
+                    UniversalDataManager.restTime)
                 UniversalDataManager.stop()
                 break
             }else if(UniversalDataManager.isEnd()==-1) {
@@ -240,19 +248,36 @@ class StartCommandExecutor : CommandExecutor, Listener {
         }
     }
 
+    suspend fun onFailPlayerLeave() {
+        while (true) {
+            UniversalDataManager.failList.forEach { player ->
+                if (!player.isOnline && !UniversalDataManager.isFail(player)) {   //结束玩家+中途退出
+                    UniversalDataManager.failList.removeIf { it.uniqueId==player.uniqueId }
+                }
+            }
+            if (!UniversalDataManager.isStart) {  //比赛已经终止，结束监听
+                break
+            }
+            delay(100)  //间隔2tick再次检测
+        }
+    }
 }
 
 class TerminateCommandExecutor : CommandExecutor {
     @Suppress("Deprecation")
     override fun onCommand(sender: CommandSender, command: Command, label: String, args: Array<out String>?): Boolean {
         if(!sender.hasPermission("icesumo.referee")) {
-            sender.sendMessage("你没有执行该命令的权限：该命令只允许裁判员执行")
+            MessageUtils.sendMessage(sender,"你没有执行该命令的权限：该命令只允许裁判员执行")
             return false
         }
-        UniversalDataManager.checkinList.forEach { player ->
-            player.sendTitle("比赛被紧急终止，原因：${args?.get(0)}", "", 10, 20, 10)
+        if(UniversalDataManager.isStart) {
+            UniversalDataManager.checkinList.forEach { player ->
+                player.sendTitle("比赛被紧急终止，原因：${args?.get(0)}", "", 10, 20, 10)
+            }
+            UniversalDataManager.stop()
+        }else{
+            sender.sendMessage("无法终止未开始的比赛")
         }
-        UniversalDataManager.stop()
         return true
     }
 }

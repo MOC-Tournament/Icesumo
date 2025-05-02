@@ -5,7 +5,7 @@ import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerMoveEvent
-import org.bukkit.event.player.PlayerQuitEvent
+//import org.bukkit.event.player.PlayerQuitEvent
 
 class FailStatusChecker : Listener {
     @EventHandler
@@ -45,13 +45,13 @@ class FailStatusChecker : Listener {
     }
 }
 
-class CheckedPlayerLeaveListener : Listener {
-    @EventHandler
-    fun onPlayerLeave(event: PlayerQuitEvent) {
-        UniversalDataManager.checkinList.forEach { player ->
-            if (player.uniqueId == event.player.uniqueId) {
-                UniversalDataManager.delCheckinPlayer(player)
-            }
-        }
-    }
-}
+//class CheckedPlayerLeaveListener : Listener {
+//    @EventHandler
+//    fun onPlayerLeave(event: PlayerQuitEvent) {
+//        UniversalDataManager.checkinList.forEach { player ->
+//            if (player.uniqueId == event.player.uniqueId) {
+//                UniversalDataManager.delCheckinPlayer(player)
+//            }
+//        }
+//    }
+//}

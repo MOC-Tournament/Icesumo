@@ -40,7 +40,7 @@ class CheckinCommandExecutor : CommandExecutor {
                 try {
                     val targets=Bukkit.getServer().selectEntities(
                         sender,
-                        "@p"
+                        "@p[gamemode=!spectator]"
                     )
                     if (targets.size>1) {
                         throw IllegalArgumentException("不可能出现多个最近玩家")
@@ -50,6 +50,7 @@ class CheckinCommandExecutor : CommandExecutor {
                     if (player == null) {
                         throw IllegalArgumentException("不可能出现无法检录的最近玩家")
                     }
+                    player.sendMessage("正在检录$playerName")
                     sender.sendMessage("正在检录$playerName")
                     if (UniversalDataManager.addCheckinPlayer(player)) {
                         sender.sendMessage(playerName + "检录成功！")
@@ -74,15 +75,15 @@ class CheckinResultCommandExecutor : CommandExecutor {
             return false
         }
         for (player in Bukkit.getOnlinePlayers()) {
-            player.sendMessage("§9===============================")
-            player.sendMessage("§b冰上相扑 - 检录结果")
+            MessageUtils.sendMessage(player,"§9===============================")
+            MessageUtils.sendMessage(player,"§b冰上相扑 - 检录结果")
             val checkinList = UniversalDataManager.checkinList
             for (checkinPlayers in checkinList) {
                 val playerName = checkinPlayers.name
-                player.sendMessage(playerName)
+                MessageUtils.sendMessage(player,playerName)
             }
-            player.sendMessage("§b\n请已检录运动员确保自身生命值和饥饿值已恢复正常。\n参赛运动员，如果您的名字没有显示在刚才的列表中，请立刻联系裁判员！")
-            player.sendMessage("§9===============================")
+            MessageUtils.sendMessage(player,"§b\n请已检录运动员确保自身生命值和饥饿值已恢复正常。\n参赛运动员，如果您的名字没有显示在刚才的列表中，请立刻联系裁判员！")
+            MessageUtils.sendMessage(player,"§9===============================")
         }
         return true
     }
@@ -143,7 +144,7 @@ class UncheckinCommandExecutor : CommandExecutor {  //TODO: 应当添加功能�
                 try {
                     val targets=Bukkit.getServer().selectEntities(
                         sender,
-                        "@p"
+                        "@p[gamemode=!spectator]"
                     )
                     if (targets.size>1) {
                         throw IllegalArgumentException("不可能出现多个最近玩家")
@@ -153,6 +154,7 @@ class UncheckinCommandExecutor : CommandExecutor {  //TODO: 应当添加功能�
                     if (player == null) {
                         throw IllegalArgumentException("不可能出现无法取消检录的最近玩家")
                     }
+                    player.sendMessage("正在取消检录$playerName")
                     sender.sendMessage("正在取消检录$playerName")
                     if (UniversalDataManager.delCheckinPlayer(player)) {
                         sender.sendMessage(playerName + "取消检录成功！")

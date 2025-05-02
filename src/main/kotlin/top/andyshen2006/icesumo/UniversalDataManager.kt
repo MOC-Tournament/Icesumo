@@ -41,7 +41,7 @@ object UniversalDataManager{
     var world = Bukkit.getWorlds()[0]!!
     var time: Long=0
     var restTime:Long =-1
-    private var failList=mutableListOf<Player>()    // TODO:其实应该给checkinList里面的玩家附加属性的，可惜当时没做，等哪次Refactor的时候再搞吧
+    var failList=mutableListOf<Player>()    // TODO:其实应该给checkinList里面的玩家附加属性的，可惜当时没做，等哪次Refactor的时候再搞吧
     private var stadiumPos= arrayOf( Triple(-1.0,60.0,-1.0), Triple(1.0,60.0,1.0), Triple(-1.0,60.0,1.0), Triple(1.0,60.0,-1.0) )
     private val lock= ReentrantLock()
     private val plugin = Bukkit.getPluginManager().getPlugin("Icesumo") as Icesumo
@@ -101,8 +101,6 @@ object UniversalDataManager{
         try {
             lock.lock()
             if (isStart) {
-                failList.clear()
-                checkinList.clear()
                 isStart = false
             }else {
                 return false
@@ -119,8 +117,7 @@ object UniversalDataManager{
             checkinList.clear()
             failList.clear()
         }finally {
-            lock.unlock()
-        }
+            lock.unlock()}
     }
 
     fun addCheckinPlayer(player: Player): Boolean {
