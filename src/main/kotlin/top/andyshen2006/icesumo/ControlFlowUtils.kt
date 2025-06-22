@@ -96,6 +96,9 @@ class StartCommandExecutor : CommandExecutor, Listener {
                     player.inventory.clear()    //清空背包
                     player.addPotionEffect(PotionEffect(PotionEffectType.RESISTANCE, 3600, 5, false))   //抗性提升
                     player.addPotionEffect(PotionEffect(PotionEffectType.REGENERATION, 3600, 5, false)) //生命恢复
+                    player.addPotionEffect(PotionEffect(PotionEffectType.SATURATION, 3600, 5, false))
+                    player.health=player.maxHealth
+//                    player.saturation=20.0.toFloat()
                     Bukkit.getLogger().info("Giving Kit to ${player.name} now")
                     Bukkit.getLogger().info("Status ${Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
                         "sudo command ${player.name} kit icesumo")}")
@@ -179,6 +182,7 @@ class StartCommandExecutor : CommandExecutor, Listener {
                 CSVManager.appendResult(UniversalDataManager.resultFile!!,winner?.uniqueId.toString(),winner?.name!!,true,
                     UniversalDataManager.restTime)
                 UniversalDataManager.stop()
+                UniversalDataManager.clear()
                 break
             }else if(UniversalDataManager.isEnd()==-1) {
                 for (player in UniversalDataManager.checkinList) {
@@ -186,6 +190,7 @@ class StartCommandExecutor : CommandExecutor, Listener {
                     player.sendTitle("本轮未决出胜者", "", 20, 20, 20)//宣布未胜利
                 }
                 UniversalDataManager.stop()
+                UniversalDataManager.clear()
                 break
             }
             if (!UniversalDataManager.isStart) {  //比赛已经终止
@@ -227,6 +232,7 @@ class StartCommandExecutor : CommandExecutor, Listener {
             }
         }
         UniversalDataManager.stop()//时间到，终止比赛
+        UniversalDataManager.clear()
     }
 
     @Suppress("Deprecation")
@@ -239,6 +245,7 @@ class StartCommandExecutor : CommandExecutor, Listener {
                         player.sendTitle("比赛被紧急终止，原因：游戏中途有玩家退出", "", 10, 20, 10)
                     }
                     UniversalDataManager.stop()    //需要终止游戏
+                    UniversalDataManager.clear()
                 }
             }
             if (!UniversalDataManager.isStart) {  //比赛已经终止，结束监听
@@ -275,6 +282,7 @@ class TerminateCommandExecutor : CommandExecutor {
                 player.sendTitle("比赛被紧急终止，原因：${args?.get(0)}", "", 10, 20, 10)
             }
             UniversalDataManager.stop()
+            UniversalDataManager.clear()
         }else{
             sender.sendMessage("无法终止未开始的比赛")
         }

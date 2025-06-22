@@ -1,11 +1,10 @@
 package top.andyshen2006.icesumo
 
-import org.bukkit.GameMode
+import org.bukkit.Location
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
 import org.bukkit.event.Listener
 import org.bukkit.event.player.PlayerMoveEvent
-//import org.bukkit.event.player.PlayerQuitEvent
 
 class FailStatusChecker : Listener {
     @EventHandler
@@ -30,7 +29,16 @@ class FailStatusChecker : Listener {
             UniversalDataManager.isFail(player) -> return //该玩家已经失败
             else -> {
                 player.sendTitle("你输了！", "", 10, 20, 10)
-                player.gameMode = GameMode.SPECTATOR    //设置为旁观者模式
+//                player.gameMode = GameMode.SPECTATOR    //设置为旁观者模式
+                val location = Location(
+                    UniversalDataManager.world,
+                    UniversalDataManager.gravePos.first,
+                    UniversalDataManager.gravePos.second,
+                    UniversalDataManager.gravePos.third,
+                    player.yaw,
+                    player.pitch
+                )
+                player.teleport(location)
                 UniversalDataManager.playerFail(player) //在数据管理器中登记失败
                 CSVManager.appendResult(
                     UniversalDataManager.resultFile!!,

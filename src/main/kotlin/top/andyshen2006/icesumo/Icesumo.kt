@@ -19,7 +19,7 @@ class Icesumo : JavaPlugin() , Listener{
         getCommand("start")?.setExecutor(StartCommandExecutor())
         getCommand("showinfo")?.setExecutor(InfoCommandExecutor())
         getCommand("terminate")?.setExecutor(TerminateCommandExecutor())
-        getCommand("clear")?.setExecutor { sender, command, label, args ->
+        getCommand("icesumo_clear")?.setExecutor { sender, command, label, args ->
             if(!sender.hasPermission("icesumo.maintainer")) {
                 MessageUtils.sendMessage(sender,"你没有执行该命令的权限：该命令只允许运维执行")
                 return@setExecutor false
