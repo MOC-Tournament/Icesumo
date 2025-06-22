@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "top.andyshen2006"
-version = "1.0-Beta"
+version = "1.0-rc1"
 
 repositories {
     maven {
