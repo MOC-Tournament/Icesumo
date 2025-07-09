@@ -102,8 +102,12 @@ class StartCommandExecutor : CommandExecutor, Listener {
                     Bukkit.getLogger().info("Giving Kit to ${player.name} now")
                     //Bukkit.getLogger().info("Status ${Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
                     //    "sudo command ${player.name} kit icesumo")}")
-                    Bukkit.getLogger().info("Status ${Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
-                        "give ${player.name} diamond_hoe[lore=['[""]','["",{"text":"竞赛用品","italic":false,"bold":true,"color":"green"}]'],enchantments={levels:{knockback:2}},unbreakable={}]")}")
+                    Bukkit.getLogger().info(
+                        """Status ${Bukkit.dispatchCommand(
+                            Bukkit.getConsoleSender(),
+                            """give ${player.name} diamond_hoe[lore=['[""]','["",{"text":"竞赛用品","italic":false,"bold":true,"color":"green"}]'],enchantments={levels:{knockback:2}},unbreakable={}]"""
+                        )}"""
+                    )
                 }
                 UniversalDataManager.world.time=6000    //调整为白天
                 Bukkit.getScheduler().runTask(plugin, Runnable {
