@@ -193,7 +193,9 @@ class StartCommandExecutor : CommandExecutor, Listener {
 
     @EventHandler
     fun moveForbiddenExecutor(event: PlayerMoveEvent) {
-        event.isCancelled = UniversalDataManager.isPreparing()
+        if (UniversalDataManager.checkinList.contains(event.player)) {
+            event.isCancelled = UniversalDataManager.isPreparing()
+        }
     }
 
     @Suppress("Deprecation", "UnstableApiUsage")
@@ -291,7 +293,6 @@ class StartCommandExecutor : CommandExecutor, Listener {
         }
         Bukkit.getLogger().info("Quitting allOnlineCheck Job!")
         UniversalDataManager.stop()
-
     }
 
     @Suppress("UnstableApiUsage")
