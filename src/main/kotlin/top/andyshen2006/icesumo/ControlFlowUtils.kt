@@ -50,16 +50,30 @@ class StartCommandExecutor : CommandExecutor, Listener {
                 MessageUtils.sendMessage(sender, "正在启动比赛……")
                 for (i in 0..(UniversalDataManager.checkinList.size - 1)) {  //自动传送
                     val player = UniversalDataManager.checkinList[i]
-                    val stadiumPos = UniversalDataManager.getStadiumPos(i)
-                    val location = Location(
-                        UniversalDataManager.world,
-                        stadiumPos.first,
-                        stadiumPos.second,
-                        stadiumPos.third,
-                        player.yaw,
-                        player.pitch
-                    )
-                    player.teleport(location)
+                    // Teleport
+                    if (UniversalDataManager.checkinList.size==2) {
+                        val stadiumPos = UniversalDataManager.getStadiumPos(i*2)    // 0,2
+                        val location = Location(
+                            UniversalDataManager.world,
+                            stadiumPos.first,
+                            stadiumPos.second,
+                            stadiumPos.third,
+                            0F,
+                            180F
+                        )
+                        player.teleport(location)
+                    }else {
+                        val stadiumPos = UniversalDataManager.getStadiumPos(i)
+                        val location = Location(
+                            UniversalDataManager.world,
+                            stadiumPos.first,
+                            stadiumPos.second,
+                            stadiumPos.third,
+                            0F,
+                            180F
+                        )
+                        player.teleport(location)
+                    }
                     player.gameMode = GameMode.ADVENTURE //设置为冒险模式
                     player.activePotionEffects.forEach { //移除所有效果
                         player.removePotionEffect(it.type)
@@ -119,7 +133,7 @@ class StartCommandExecutor : CommandExecutor, Listener {
                 UniversalDataManager.world.time = 6000    //调整为白天
                 Bukkit.getScheduler().runTask(plugin, Runnable {
                     CoroutineScope(Dispatchers.Default).launch {    //协程，启动！
-                        val countdownJob = UniversalDataManager.checkinList.map { player ->            //赛前倒计时
+                        val countdownJob = Bukkit.getOnlinePlayers().map { player ->            //赛前倒计时
                             async { countdownBeforeGame(player) }
                         }
                         countdownJob.awaitAll()
@@ -182,7 +196,7 @@ class StartCommandExecutor : CommandExecutor, Listener {
         delay(400)
         player.sendTitle("倒计时：", "", 10, 20, 10)
         for (i in 5 downTo 0) {
-            UniversalDataManager.checkinList.forEach { player ->
+            for(player in Bukkit.getOnlinePlayers()){
                 player.sendTitle(i.toString(), "", 10, 20, 10)
             }
             delay(1000)
@@ -202,32 +216,39 @@ class StartCommandExecutor : CommandExecutor, Listener {
     suspend fun winningCheck() {
         //胜利检测
         while (true) {
-            if (UniversalDataManager.isEnd() == 1) {
-                var winner: Player? = null
+            if (((UniversalDataManager.checkinList.size==4) and (UniversalDataManager.failList.size==2))
+                or ((UniversalDataManager.checkinList.size==3) and (UniversalDataManager.failList.size==1))
+                or ((UniversalDataManager.checkinList.size==2) and (UniversalDataManager.failList.size==1))) {
+                val winners = mutableListOf<Player>()
                 UniversalDataManager.checkinList.forEach { player ->
                     if (!UniversalDataManager.isFail(player)) {
-                        winner = player
+                        winners.add(player)
                     }
                 }
-                for (player in UniversalDataManager.checkinList) {
-                    player.sendTitle("比赛结束", "", 10, 20, 10)
-                    player.sendTitle("胜利者为：${winner?.name}", "", 20, 20, 20)//宣布胜利者
-                    Bukkit.getLogger().info("胜利者为：${winner?.name}")
+                for (winner in winners) {
+                    for(player in Bukkit.getOnlinePlayers()){
+                        player.sendTitle("比赛结束", "", 10, 20, 10)
+                        player.sendMessage("胜利者为：${winner.name}")//宣布胜利者
+                    }
+                    Bukkit.getLogger().info("胜利者为：${winner.name}")
                 }
-                CSVManager.appendResult(
-                    UniversalDataManager.resultFile!!, winner?.uniqueId.toString(), winner?.name!!, true,
-                    UniversalDataManager.restTime
-                )
-                UniversalDataManager.stop()
-                break
-            } else if (UniversalDataManager.isEnd() == -1) {
-                for (player in UniversalDataManager.checkinList) {
-                    player.sendTitle("比赛结束", "", 10, 20, 10)
-                    player.sendTitle("本轮未决出胜者", "", 20, 20, 20)//宣布未胜利
+                for (winner in winners) {
+                    CSVManager.appendResult(
+                        UniversalDataManager.resultFile!!, winner.uniqueId.toString(), winner.name, true,
+                        UniversalDataManager.restTime
+                    )
                 }
                 UniversalDataManager.stop()
                 break
             }
+//            else if (UniversalDataManager.isEnd() == -1) {
+//                for(player in Bukkit.getOnlinePlayers()){
+//                    player.sendTitle("比赛结束", "", 10, 20, 10)
+//                    player.sendTitle("本轮未决出胜者", "", 20, 20, 20)//宣布未胜利
+//                }
+//                UniversalDataManager.stop()
+//                break
+//            }
             if (!UniversalDataManager.isStart) {  //比赛已经终止
                 break
             }
@@ -245,7 +266,7 @@ class StartCommandExecutor : CommandExecutor, Listener {
                     return
                 }
                 UniversalDataManager.restTime > 5 -> {
-                    UniversalDataManager.checkinList.forEach { player ->
+                    for(player in Bukkit.getOnlinePlayers()){
                         player.sendActionBar("${UniversalDataManager.restTime}")
                     }
                     UniversalDataManager.restTime--
@@ -253,7 +274,7 @@ class StartCommandExecutor : CommandExecutor, Listener {
                 }
 
                 else -> {
-                    UniversalDataManager.checkinList.forEach { player ->
+                    for(player in Bukkit.getOnlinePlayers()){
                         player.sendTitle("${UniversalDataManager.restTime}", "", 10, 20, 10)
                     }
                     UniversalDataManager.restTime--
@@ -261,12 +282,14 @@ class StartCommandExecutor : CommandExecutor, Listener {
                 }
             }
         }
-        UniversalDataManager.checkinList.forEach { player ->
+        for(player in Bukkit.getOnlinePlayers()){
             player.sendTitle("时间到！", "", 10, 20, 10)
             player.sendTitle("比赛结束！", "", 10, 20, 10)
         }
-        if (UniversalDataManager.isEnd() == 0) {
-            UniversalDataManager.checkinList.forEach { player ->
+        if (!(((UniversalDataManager.checkinList.size==4) and (UniversalDataManager.failList.size==2))
+                    or ((UniversalDataManager.checkinList.size==3) and (UniversalDataManager.failList.size==1))
+                    or ((UniversalDataManager.checkinList.size==2) and (UniversalDataManager.failList.size==1)))) {
+            for(player in Bukkit.getOnlinePlayers()){
                 player.sendTitle("本轮未决出胜者", "", 20, 20, 20)//宣布未胜利
             }
         }
@@ -281,9 +304,10 @@ class StartCommandExecutor : CommandExecutor, Listener {
         while (true) {
             UniversalDataManager.checkinList.forEach { player ->
                 if (!player.isOnline && !UniversalDataManager.isFail(player)) {   //比赛中玩家+中途退出
-                    UniversalDataManager.checkinList.forEach { player ->
+                    for(player in Bukkit.getOnlinePlayers()){
                         player.sendTitle("比赛被紧急终止，原因：游戏中途有玩家退出", "", 10, 20, 10)
                     }
+                    UniversalDataManager.stop()
                 }
             }
             if (!UniversalDataManager.isStart) {  //比赛已经终止，结束监听
@@ -320,8 +344,12 @@ class TerminateCommandExecutor : CommandExecutor {
             return false
         }
         if (UniversalDataManager.isStart) {
-            UniversalDataManager.checkinList.forEach { player ->
-                player.sendTitle("比赛被紧急终止，原因：${args?.get(0)}", "", 10, 20, 10)
+            if (args?.get(0)==null){
+                sender.sendMessage("错误：终止比赛必须要有原因")
+                return false
+            }
+            for(player in Bukkit.getOnlinePlayers()){
+                player.sendTitle("比赛被紧急终止", "原因：${args[0]}", 10, 20, 10)
             }
         } else {
             sender.sendMessage("无法终止未开始的比赛")

@@ -211,14 +211,6 @@ object UniversalDataManager{
         return false
     }
 
-    fun isEnd(): Int{   //只剩下一个人
-        return when{
-            failList.size+1==checkinList.size -> 1   //决出胜负
-            failList.size==checkinList.size -> -1    //全负
-            else-> 0 //继续比赛
-        }
-    }
-
     fun isPreparing(): Boolean{
         return preparing
     }

@@ -1,5 +1,6 @@
 package top.andyshen2006.icesumo
 
+import org.bukkit.Bukkit
 import org.bukkit.Location
 import org.bukkit.entity.Player
 import org.bukkit.event.EventHandler
@@ -21,14 +22,18 @@ class FailStatusChecker : Listener {
         }
     }
 
-    @Suppress("DEPRECATION")
+    @Suppress("DEPRECATION","UnstableApiUsage")
     fun executeFailAction(player: Player) {
         when {
             !UniversalDataManager.isStart -> return //比赛还未开始
             !UniversalDataManager.isCheckin(player) -> return //该玩家没有被检录
             UniversalDataManager.isFail(player) -> return //该玩家已经失败
             else -> {
-                player.sendTitle("你输了！", "", 10, 20, 10)
+//                player.sendTitle("你输了！", "", 10, 20, 10)
+                for (person in Bukkit.getOnlinePlayers()) {
+                    person.sendTitle("玩家${player.name}坠落！","",10,20,10)
+                }
+                Bukkit.getLogger().info("${player.name} Failed!")
 //                player.gameMode = GameMode.SPECTATOR    //设置为旁观者模式
                 val location = Location(
                     UniversalDataManager.world,
